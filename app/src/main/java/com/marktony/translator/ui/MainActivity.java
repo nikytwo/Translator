@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity
 
     private NavigationView navigationView;
     private Toolbar toolbar;
+    private DrawerLayout drawer;
 
     private NoteBookFragment noteBookFragment;
     private DailyOneFragment dailyOneFragment;
@@ -35,53 +36,42 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initViews();
-
-        if (savedInstanceState != null) {
-            FragmentManager manager = getSupportFragmentManager();
-            noteBookFragment = (NoteBookFragment) manager.getFragment(savedInstanceState, "noteBookFragment");
-            dailyOneFragment = (DailyOneFragment) manager.getFragment(savedInstanceState, "dailyOneFragment");
-            translateFragment = (TranslateFragment) manager.getFragment(savedInstanceState, "translateFragment");
-        } else {
-            noteBookFragment = new NoteBookFragment();
-            dailyOneFragment = new DailyOneFragment();
-            translateFragment = new TranslateFragment();
-        }
+        initMenus();
 
         FragmentManager manager = getSupportFragmentManager();
-
+        noteBookFragment = new NoteBookFragment();
+        dailyOneFragment = new DailyOneFragment();
+        translateFragment = new TranslateFragment();
         manager.beginTransaction()
                 .add(R.id.container_main, translateFragment, "translateFragment")
                 .commit();
-
         manager.beginTransaction()
                 .add(R.id.container_main, dailyOneFragment, "dailyOneFragment")
                 .commit();
-
         manager.beginTransaction()
                 .add(R.id.container_main, noteBookFragment, "noteBookFragment")
                 .commit();
 
         Intent intent = getIntent();
         if (intent.getAction().equals(ACTION_NOTEBOOK)) {
-            showHideFragment(2);
+            showHideFragment(R.id.nav_notebook);
         } else if (intent.getAction().equals(ACTION_DAILY_ONE)){
-            showHideFragment(1);
+            showHideFragment(R.id.nav_daily);
         } else {
-            showHideFragment(0);
+            showHideFragment(R.id.nav_translate);
         }
 
     }
 
-    private void initViews() {
+    private void initMenus() {
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         navigationView = (NavigationView) findViewById(R.id.nav_view);
@@ -91,17 +81,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+            return;
         }
         super.onBackPressed();
 
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
     }
 
     @Override
@@ -118,34 +103,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-
-        int id = item.getItemId();
-
-        if (id == R.id.nav_translate) {
-
-            showHideFragment(0);
-
-        } else if (id == R.id.nav_daily) {
-
-            showHideFragment(1);
-
-        } else if (id == R.id.nav_notebook) {
-
-            showHideFragment(2);
-
-        } else if (id == R.id.nav_setting) {
-
-            startActivity(new Intent(MainActivity.this,SettingsPreferenceActivity.class));
-
-        }
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
     @Override
@@ -165,36 +122,55 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+
+        if (savedInstanceState != null) {
+            FragmentManager manager = getSupportFragmentManager();
+            noteBookFragment = (NoteBookFragment) manager.getFragment(savedInstanceState, "noteBookFragment");
+            dailyOneFragment = (DailyOneFragment) manager.getFragment(savedInstanceState, "dailyOneFragment");
+            translateFragment = (TranslateFragment) manager.getFragment(savedInstanceState, "translateFragment");
+        }
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.nav_setting) {
+            startActivity(new Intent(MainActivity.this,SettingsPreferenceActivity.class));
+        } else {
+            showHideFragment(id);
+        }
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
     /**
      * show or hide the fragment
      * and handle other operations like set toolbar's title
      * set the navigation's checked item
-     * @param position which fragment to show, only 3 values at this time
-     *                 0 for translate fragment
-     *                 1 for daily one fragment
-     *                 2 for notebook fragment
      */
-    private void showHideFragment(@IntRange(from = 0, to = 2) int position) {
+    private void showHideFragment(int itemId) {
 
         FragmentManager manager = getSupportFragmentManager();
         manager.beginTransaction().hide(translateFragment).commit();
         manager.beginTransaction().hide(noteBookFragment).commit();
         manager.beginTransaction().hide(dailyOneFragment).commit();
 
-        if (position == 0) {
+        if (itemId == R.id.nav_translate) {
             manager.beginTransaction().show(translateFragment).commit();
             toolbar.setTitle(R.string.app_name);
             navigationView.setCheckedItem(R.id.nav_translate);
-        } else if (position == 1) {
+        } else if (itemId == R.id.nav_daily) {
             toolbar.setTitle(R.string.daily_one);
             manager.beginTransaction().show(dailyOneFragment).commit();
             navigationView.setCheckedItem(R.id.nav_daily);
-        } else if (position == 2) {
+        } else if (itemId == R.id.nav_notebook) {
             toolbar.setTitle(R.string.notebook);
             manager.beginTransaction().show(noteBookFragment).commit();
             navigationView.setCheckedItem(R.id.nav_notebook);
         }
-
     }
 
 }
