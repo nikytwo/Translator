@@ -41,6 +41,7 @@ import com.marktony.translator.constant.Constants;
 import com.marktony.translator.db.DBUtil;
 import com.marktony.translator.db.NotebookDatabaseHelper;
 import com.marktony.translator.model.BingModel;
+import com.marktony.translator.service.TTSService;
 import com.marktony.translator.util.NetworkUtil;
 
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class TranslateFragment extends Fragment {
     private ImageView imageViewMark;
     private View viewResult;
     private AppCompatButton button;
+    private TTSService speaker; // TTS对象
 
     private ArrayList<BingModel.Sample> samples;
     private RecyclerView recyclerView;
@@ -90,6 +92,7 @@ public class TranslateFragment extends Fragment {
         super.onCreate(savedInstanceState);
         queue = Volley.newRequestQueue(getActivity().getApplicationContext());
         dbHelper = new NotebookDatabaseHelper(getActivity(),"MyStore.db",null,1);
+        speaker = new TTSService(this.getContext());
     }
 
     @Nullable
@@ -109,6 +112,7 @@ public class TranslateFragment extends Fragment {
             @Override
             public void onClick(View view) {
 
+                speaker.speak(editText.getText().toString());
                 if (!NetworkUtil.isNetworkConnected(getActivity())) {
                     showNoNetwork();
                 } else if (editText.getText() == null || editText.getText().length() == 0) {
@@ -376,5 +380,11 @@ public class TranslateFragment extends Fragment {
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        speaker.stop();
     }
 }
